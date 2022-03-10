@@ -13,6 +13,8 @@
         "security/ir.model.access.csv",
         "security/ir_rule.xml",
         "data/mail_template.xml",
+        "views/assets.xml",
+        "views/ir_actions_report_xml.xml",
         "views/report_async.xml",
         "wizard/print_report_wizard.xml",
     ],

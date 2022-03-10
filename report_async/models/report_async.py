@@ -124,6 +124,16 @@ class ReportAsync(models.Model):
         return result
 
     @api.model
+    def print_document_async(self, record_ids, report_name, html=None, data=None):
+        """ Generate a document async, do not return the document file """
+        report = self.env['report']._get_report_from_name(report_name)
+        report_async = self.new()
+        report_async.email_notify = True
+        report_async.with_delay().run_report(
+             record_ids, None, report.id, self._uid
+        )
+
+    @api.model
     @job
     def run_report(self, docids, data, report_id, user_id):
         report = self.env["ir.actions.report.xml"].browse(report_id)
