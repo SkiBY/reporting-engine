@@ -2,10 +2,15 @@
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl.html)
 
 import base64
+import logging
+import mock
 from odoo import api, fields, models, _
+from odoo.http import request
 from odoo.tools.safe_eval import safe_eval
 from odoo.exceptions import UserError
 from odoo.addons.queue_job.job import job
+
+_logger = logging.getLogger(__name__)
 
 
 class ReportAsync(models.Model):
@@ -127,21 +132,28 @@ class ReportAsync(models.Model):
     def print_document_async(self, record_ids, report_name, html=None, data=None):
         """ Generate a document async, do not return the document file """
         report = self.env['report']._get_report_from_name(report_name)
-        report_async = self.new()
-        report_async.email_notify = True
-        report_async.with_delay().run_report(
-             record_ids, None, report.id, self._uid
+        self.with_delay().run_report(
+             record_ids, data or {}, report.id, self._uid, email_notify=True, session_id=request.session.sid
         )
 
     @api.model
     @job
-    def run_report(self, docids, data, report_id, user_id):
+    def run_report(self, docids, data, report_id, user_id, email_notify=False, session_id=None):
         report = self.env["ir.actions.report.xml"].browse(report_id)
         # Render report
-        out_file = self.env["report"].render(report.report_name)
+        report_obj = self.env["report"]
+        if user_id:
+            report_obj = self.sudo(user_id)
+        if session_id:
+            # necessary for correct CSS headers
+            with mock.patch('odoo.http.request.session') as session:
+                session.sid = session_id
+                out_file = report_obj.get_pdf(docids, report.report_name, data=data)
+        else:
+            out_file = report_obj.get_pdf(docids, report.report_name, data=data)
         out_file = base64.b64encode(out_file)
-        file_ext = report.report_type.replace("qweb-", "")
-        out_name = "%s.%s" % (report.name, file_ext)
+        out_name = "%s-%s-%s.pdf" % (report.name, str(min(docids)), str(max(docids)))
+        _logger.info("ASYNC GENERATION OF REPORT %s FOR RECORDS %S", (out_name, str(docids)))
         # Save report to attachment
         attachment = (
             self.env["ir.attachment"]
@@ -164,7 +176,7 @@ class ReportAsync(models.Model):
             (self._uid, self._uid, attachment.id),
         )
         # Send email
-        if self.email_notify:
+        if email_notify or self.email_notify:
             self._send_email(attachment)
 
     def _send_email(self, attachment):
