@@ -133,17 +133,18 @@ class ReportAsync(models.Model):
         """ Generate a document async, do not return the document file """
         report = self.env['report']._get_report_from_name(report_name)
         self.with_delay().run_report(
-             record_ids, data or {}, report.id, self._uid, email_notify=True, session_id=request.session.sid
+             record_ids, data or {}, report.id, self._uid, email_notify=True,
+             to_email=self.env.user.email, session_id=request.session.sid
         )
 
     @api.model
     @job
-    def run_report(self, docids, data, report_id, user_id, email_notify=False, session_id=None):
+    def run_report(self, docids, data, report_id, user_id, email_notify=False, to_email=None, session_id=None):
         report = self.env["ir.actions.report.xml"].browse(report_id)
         # Render report
         report_obj = self.env["report"]
         if user_id:
-            report_obj = self.sudo(user_id)
+            report_obj = report_obj.sudo(user_id)
         if session_id:
             # necessary for correct CSS headers
             with mock.patch('odoo.http.request.session') as session:
@@ -153,7 +154,7 @@ class ReportAsync(models.Model):
             out_file = report_obj.get_pdf(docids, report.report_name, data=data)
         out_file = base64.b64encode(out_file)
         out_name = "%s-%s-%s.pdf" % (report.name, str(min(docids)), str(max(docids)))
-        _logger.info("ASYNC GENERATION OF REPORT %s FOR RECORDS %S", (out_name, str(docids)))
+        _logger.info("ASYNC GENERATION OF REPORT %s", (out_name,))
         # Save report to attachment
         attachment = (
             self.env["ir.attachment"]
@@ -177,8 +178,14 @@ class ReportAsync(models.Model):
         )
         # Send email
         if email_notify or self.email_notify:
-            self._send_email(attachment)
+            self._send_email(attachment, to_email=to_email)
 
-    def _send_email(self, attachment):
+    def _send_email(self, attachment, to_email=None):
         template = self.env.ref("report_async.async_report_delivery")
-        template.send_mail(attachment.id, force_send=False)
+        email_values = {}
+        if to_email:
+            email_values = {
+                'recipient_ids': [],
+                'email_to': to_email,
+            }
+        template.send_mail(attachment.id, force_send=False, email_values=email_values)
