@@ -16,7 +16,10 @@
         "views/assets.xml",
         "views/ir_actions_report_xml.xml",
         "views/report_async.xml",
-        "wizard/print_report_wizard.xml",
+        "wizard/print_report_wizard.xml"
+    ],
+    'qweb': [
+        'static/src/xml/report_async.xml'
     ],
     "demo": ["demo/report_async_demo.xml"],
     "installable": True,

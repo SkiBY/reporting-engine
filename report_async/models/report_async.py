@@ -129,12 +129,14 @@ class ReportAsync(models.Model):
         return result
 
     @api.model
-    def print_document_async(self, record_ids, report_name, html=None, data=None):
+    def print_document_async(self, record_ids, report_name, html=None,
+                             data=None, to_email=''):
         """ Generate a document async, do not return the document file """
+        user_email = to_email or self.env.user.email
         report = self.env['report']._get_report_from_name(report_name)
         self.with_delay().run_report(
              record_ids, data or {}, report.id, self._uid, email_notify=True,
-             to_email=self.env.user.email, session_id=request.session.sid
+             to_email=user_email, session_id=request.session.sid
         )
 
     @api.model
