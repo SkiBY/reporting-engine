@@ -12,6 +12,11 @@ class IrActionsReportXml(models.Model):
     _inherit = 'ir.actions.report.xml'
 
     async_report = fields.Boolean(default=False)
+    async_no_records = fields.Integer(
+        string="Min of Records",
+        default=100,
+        help="Min no of records to use async report functionality; e.g 100+"
+    )
 
     @api.model
     def is_report_async(self, report_name):
@@ -26,5 +31,6 @@ class IrActionsReportXml(models.Model):
             return result
         return {
             'is_report_async': report.async_report,
+            'no_of_records': report.async_no_records,
             'mail_recipient': self.env.user.email
         }

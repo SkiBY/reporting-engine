@@ -20,7 +20,8 @@ odoo.define('report_async.print', function(require) {
             new Model('ir.actions.report.xml')
                 .call('is_report_async', [_action.report_name])
                 .then(function(result){
-                    if (result.is_report_async) {
+                    var records = _action.context.active_ids;
+                    if (result.is_report_async && records.length >= result.no_of_records) {
                         // Popup for async Configuration
                         var asyncDialog = new Dialog(self, {
                             title: _t("Async Report Configuration ") + '(' + action['display_name'] + ')',

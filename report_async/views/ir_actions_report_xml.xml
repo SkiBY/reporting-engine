@@ -7,7 +7,8 @@
     <field name="inherit_id" ref="base.act_report_xml_view" />
     <field name="arch" type="xml">
       <xpath expr="//page[@name='advanced']/group[1]" position="inside" >
-        <field name="async_report"/>
+          <field name="async_report"/>
+          <field name="async_no_records" attrs="{'required': [('async_report', '=', True)]}"/>
       </xpath>
     </field>
   </record>
