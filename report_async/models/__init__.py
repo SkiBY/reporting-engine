@@ -4,3 +4,4 @@
 from . import ir_actions_report_xml
 from . import ir_report
 from . import report_async
+from . import queue_job
