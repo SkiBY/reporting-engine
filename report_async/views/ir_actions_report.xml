@@ -7,9 +7,9 @@
         <field name="arch" type="xml">
             <xpath expr="//page[@name='advanced']/group" position="after">
                 <group name="async_opts" string="Async Options">
-                    <field name="async_report"/>
-                    <field name="async_no_records"/>
-                    <field name="async_mail_recipient"/>
+                    <field name="async_report" />
+                    <field name="async_no_records" />
+                    <field name="async_mail_recipient" />
                 </group>
             </xpath>
         </field>
