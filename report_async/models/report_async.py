@@ -146,7 +146,7 @@ class ReportAsync(models.Model):
     def print_document_async(
         self, record_ids, report_name, html=None, data=None, to_email=""
     ):
-        """ Generate a document async, do not return the document file """
+        """Generate a document async, do not return the document file"""
         user_email = to_email or self.env.user.email
         report = self.env["ir.actions.report"]._get_report_from_name(report_name)
         self.with_delay().run_report(
